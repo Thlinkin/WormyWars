@@ -17,6 +17,7 @@ import level_data
 
 from wormbot_level_1 import WormBotLevel1
 from wormbot_level_2 import WormBotLevel2
+from wormbot_level_3 import WormBotLevel3
 
 
 def main():
@@ -45,7 +46,7 @@ def main():
         FPS = SKILL_SPEEDS[skill]
         winning_player = run_game(num_players, num_robots)
         show_game_over_screen(winning_player, WORM_COLORS[winning_player[0] - 1])
-        
+
 
 def get_safe_starting_coords(player_number, is_wormbot, existing_coords=None):
     if is_wormbot:
@@ -74,7 +75,7 @@ def worm_starting_coords(start_x, start_y):
 
 
 def run_game(num_humans, num_robots=0):
-    num_robots = min(num_robots, 4-num_humans)
+    num_robots = min(num_robots, 4 - num_humans)
     # num_humans = num_players - num_robots
     num_players = num_humans + num_robots
 
@@ -95,9 +96,11 @@ def run_game(num_humans, num_robots=0):
 
     for ii in range(num_robots):
         if ii % 2 == 0:
-            worms.append(WormBotLevel1(WORM_COLORS[worm_num], player_number=worm_num))
+            worms.append(WormBotLevel3(WORM_COLORS[worm_num], player_number=worm_num))
+            # worms.append(KillBotLevel1(WORM_COLORS[worm_num], player_number=worm_num))
         else:
             worms.append(WormBotLevel2(WORM_COLORS[worm_num], player_number=worm_num))
+            # worms.append(WormBotLevel2(WORM_COLORS[worm_num], player_number=worm_num))
         worm_num += 1
 
     # Per level
@@ -155,7 +158,7 @@ def run_game(num_humans, num_robots=0):
         lime_time = -1000
 
         pause_end_time = current_time() + LEVEL_START_TIME
-        pause_message = 'Level {}: {}'.format(level_counter+1, level.name)
+        pause_message = 'Level {}: {}'.format(level_counter + 1, level.name)
 
         end_level = False
         while apple_number <= level.num_apples:  # main game loop
@@ -175,11 +178,12 @@ def run_game(num_humans, num_robots=0):
                 do_switcheroo_effect = False
 
                 # Handle robots based on current state of worms and board
-                visible_worms_info = gather_visible_worms_info(worms)  # Gather before any of this frame's choices are made
+                visible_worms_info = gather_visible_worms_info(
+                    worms)  # Gather before any of this frame's choices are made
                 fruits = [banana, grape, lime, blueberry, golden_apple]
                 for ii in range(num_players):
                     if worms[ii].is_robot and worms[ii].is_in_play:
-                        worms[ii].choose_direction(visible_worms_info, portal_coords, wall_coords, apple, fruits)
+                        worms[ii].choose_direction(visible_worms_info, portal_coords, wall_coords, apple, fruits, level.portals)
 
                 for event in pygame.event.get():  # event handling loop
 
@@ -456,7 +460,7 @@ def run_game(num_humans, num_robots=0):
             draw_walls(wall_coords)
             draw_portals(portal_coords)
             if current_time() < pause_end_time:
-                draw_pause_message(pause_message, color=BLUE, pulse_time=LEVEL_START_TIME*4)
+                draw_pause_message(pause_message, color=BLUE, pulse_time=LEVEL_START_TIME * 4)
 
             draw_fruit(golden_apple, GOLD, is_shiny=True)
             draw_fruit(grape, PURPLE)
@@ -469,7 +473,8 @@ def run_game(num_humans, num_robots=0):
                     remove_worm_events(ii)
 
                     if worms[ii].is_in_play:
-                        starting_coords = get_safe_starting_coords(worms[ii].player_number, worms[ii].is_robot, existing_coords)
+                        starting_coords = get_safe_starting_coords(worms[ii].player_number, worms[ii].is_robot,
+                                                                   existing_coords)
                         worms[ii].birth(starting_coords)
                         if worms[ii].num_lives == 0:
                             sound_die.play()
@@ -585,7 +590,7 @@ def check_for_key_press():
                 terminate()
             else:
                 return event.key  # key found return with it
-    # no quit or key events in queue so return None    
+    # no quit or key events in queue so return None
     return None
 
 
@@ -632,7 +637,6 @@ def show_splash_screen():
 
 
 def show_choice_screen(num_players=None, num_wormbots=None, skill=None):
-
     title_font = pygame.font.Font('freesansbold.ttf', 50)
     choice_font = pygame.font.Font('freesansbold.ttf', 25)
 
@@ -648,14 +652,14 @@ def show_choice_screen(num_players=None, num_wormbots=None, skill=None):
         num_players = 2
     if num_wormbots is None:
         num_wormbots = 0
-    
+
     while True:
         DISPLAYSURF.fill(BGCOLOR)
-        use_color_1 = get_pulse_color([GREEN, PURPLE, RED, BLUE], pulse_time=3.0) 
-        use_color_2 = get_pulse_color([BLUE, BLACK, PURPLE, BLACK], pulse_time=3.0) 
+        use_color_1 = get_pulse_color([GREEN, PURPLE, RED, BLUE], pulse_time=3.0)
+        use_color_2 = get_pulse_color([BLUE, BLACK, PURPLE, BLACK], pulse_time=3.0)
 
         # Title section
-        color_title = get_pulse_color([GREEN, PURPLE, RED, BLUE], pulse_time=3.0) 
+        color_title = get_pulse_color([GREEN, PURPLE, RED, BLUE], pulse_time=3.0)
         surf_title = title_font.render('Wormy Wars!', True, color_title)
         rect_title = surf_title.get_rect()
         rect_title.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT / 16)
@@ -712,9 +716,9 @@ def show_choice_screen(num_players=None, num_wormbots=None, skill=None):
                 use_color = use_color_2
             surf_3 = choice_font.render(number_str, True, use_color)
             rect_3 = surf_3.get_rect()
-            rect_3.midtop = (WINDOWWIDTH / 4, 0.60 * WINDOWHEIGHT + ii*30)
+            rect_3.midtop = (WINDOWWIDTH / 4, 0.60 * WINDOWHEIGHT + ii * 30)
             DISPLAYSURF.blit(surf_3, rect_3)
-            
+
         #
         DISPLAYSURF.blit(surf_enter, rect_enter)
 
@@ -738,7 +742,7 @@ def show_choice_screen(num_players=None, num_wormbots=None, skill=None):
             elif key == K_4:
                 num_players = 4
             elif key == K_0:
-                num_players = 0                
+                num_players = 0
             elif key == K_F1:
                 num_wormbots = 1
             elif key == K_F2:
@@ -750,20 +754,20 @@ def show_choice_screen(num_players=None, num_wormbots=None, skill=None):
             elif key == K_F10:
                 num_wormbots = 0
             elif key == K_b:
-                skill = 0                
+                skill = 0
             elif key == K_i:
                 skill = 1
             elif key == K_a:
                 skill = 2
             elif key == K_e:
-                skill = 3                  
+                skill = 3
             elif key == K_RETURN:
                 if num_wormbots + num_players > 0:
                     return num_players, num_wormbots, skill
 
         FPSCLOCK.tick(50)
 
-    
+
 def terminate():
     pygame.quit()
     sys.exit()
@@ -863,7 +867,7 @@ def draw_walls(wall_coords):
         segment_rect = pygame.Rect(x, y, CELLSIZE, CELLSIZE)
         pygame.draw.rect(DISPLAYSURF, wall_color, segment_rect)
 
-        
+
 def draw_fruit(coord, fruit_color=RED, is_shiny=False, is_bad=False):
     if len(coord) == 0:
         return
