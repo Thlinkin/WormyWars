@@ -44,10 +44,36 @@ class PortalPoint:
 #                  left_action=Action(coord, LEFT),
 #                  right_action=Action({'x': 678, 'y':34}, DOWN))
 
+def expand_walls(wall_defs):
+    expanded = []
+    for w in wall_defs:
+        xs = w['x']
+        ys = w['y']
+
+        # If x is a range, expand it; otherwise make it a list of one
+        if isinstance(xs, range):
+            xs = list(xs)
+        else:
+            xs = [xs]
+
+        # Same for y
+        if isinstance(ys, range):
+            ys = list(ys)
+        else:
+            ys = [ys]
+
+        # Produce all combinations of x and y
+        for x in xs:
+            for y in ys:
+                expanded.append({'x': x, 'y': y})
+
+    return expanded
+
 class Level:
     def __init__(self, number, name, portals, walls, num_apples):
+
         self.portals = portals
-        self.walls = walls
+        self.walls = expand_walls(walls)
         self.number = number
         self.name = name
         self.num_apples = num_apples
