@@ -42,7 +42,6 @@ def gather_visible_worms_info(worms):
 
 
 def get_new_head(use_direction, use_coords):
-
     new_head = []
     if use_direction == UP:
         new_head = {'x': use_coords[HEAD]['x'], 'y': use_coords[HEAD]['y'] - 1}
@@ -63,10 +62,15 @@ class WormInfo:
         self.coords = []
         self.direction = []
         self.is_in_play = []
-
+        #chatgpt below
+        self.is_robot = False
+        self.num_lives = 0
+        self.score = 0
+        self.last_portal_time = -1000.0
+        self.last_point_time = -1000.0
+        #gptend
 
 class Worm:
-
     coords = []
     _direction = []
     num_lives = []
@@ -99,13 +103,21 @@ class Worm:
         self.player_number = player_number
         self.num_lives = NUM_LIVES + 1
         self.score = 0
-        self.birth([])   # Don't need coords here, wait for new_level call
+        self.birth([])  # Don't need coords here, wait for new_level call
 
     def get_worm_info(self):
         my_info = WormInfo()
         my_info.coords = self.coords
         my_info.direction = self._direction
         my_info.player_number = self.player_number
+        #gpt
+        my_info.is_in_play = self.is_in_play
+
+        my_info.is_robot = self.is_robot
+        my_info.num_lives = self.num_lives
+        my_info.score = self.score
+        my_info.last_portal_time = self.last_portal_time
+        my_info.last_point_time = self.last_point_time
 
         return my_info
 
@@ -187,11 +199,11 @@ class Worm:
 
     def is_fading_out(self):
         return (self.invisible_end_time - NUM_SECS_IN_INVISIBLE) < current_time() \
-               < (self.invisible_end_time - NUM_SECS_IN_INVISIBLE + NUM_SECS_IN_FADE)
+            < (self.invisible_end_time - NUM_SECS_IN_INVISIBLE + NUM_SECS_IN_FADE)
 
     def is_visible(self):
         return self.is_fading_out() or self.is_fading_in() or current_time() > self.invisible_end_time
-    
+
     def is_in_turbo(self):
         return current_time() < self.turbo_end_time
 
@@ -226,7 +238,7 @@ class Worm:
     def add_score(self, new_score):
         self.score += new_score
         self.last_point_time = current_time()
-    
+
     def draw(self, display_surface):
         if self.is_in_play:
             inner_size = CELLSIZE - 8
@@ -263,14 +275,14 @@ class Worm:
                     use_outer_offset = 0
 
                 if self.is_dying:
-                    block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=DYING_TIME_IN_SECS*2.0,
+                    block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=DYING_TIME_IN_SECS * 2.0,
                                                         pulse_start_time=self.started_dying_time)
                 elif self.is_fading_out():
-                    block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=NUM_SECS_IN_FADE*2.0,
+                    block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=NUM_SECS_IN_FADE * 2.0,
                                                         pulse_start_time=self.fade_start_time)
                 elif self.is_fading_in():
-                    block_color = utils.get_pulse_color([BLACK, block_color], pulse_time=NUM_SECS_IN_FADE*2.0,
-                                                        pulse_start_time=self.fade_start_time+NUM_SECS_IN_INVISIBLE)
+                    block_color = utils.get_pulse_color([BLACK, block_color], pulse_time=NUM_SECS_IN_FADE * 2.0,
+                                                        pulse_start_time=self.fade_start_time + NUM_SECS_IN_INVISIBLE)
                 elif not self.is_visible():
                     block_color = BLACK
                 worm_outer_rect = pygame.Rect(x + use_outer_offset, y + use_outer_offset,
@@ -294,13 +306,13 @@ class Worm:
                         block_color = utils.get_shifting_color([block_color, LIGHTBLUE], 1.0)
 
                     if self.is_dying:
-                        block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=DYING_TIME_IN_SECS*1.0,
+                        block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=DYING_TIME_IN_SECS * 1.0,
                                                             pulse_start_time=self.started_dying_time)
                     elif self.is_fading_out():
-                        block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=NUM_SECS_IN_FADE*2.0,
+                        block_color = utils.get_pulse_color([block_color, BLACK], pulse_time=NUM_SECS_IN_FADE * 2.0,
                                                             pulse_start_time=self.fade_start_time)
                     elif self.is_fading_in():
-                        block_color = utils.get_pulse_color([BLACK, block_color], pulse_time=NUM_SECS_IN_FADE*2.0,
+                        block_color = utils.get_pulse_color([BLACK, block_color], pulse_time=NUM_SECS_IN_FADE * 2.0,
                                                             pulse_start_time=self.fade_start_time)
                     if not self.is_visible():
                         block_color = BLACK
@@ -327,7 +339,7 @@ class Worm:
         # move the worm by adding a segment in the direction it is moving
         new_head = get_new_head(self._direction, self.coords)
         self.coords.insert(0, new_head)
-        
+
         # delete the tail unless growing
         if self.num_to_grow > 0:
             # Don't delete the tail, grow instead!
@@ -340,7 +352,7 @@ class Worm:
             if len(self.coords) == 1:
                 self.die()
             else:
-                del self.coords[-1]     # remove worm's tail segment
+                del self.coords[-1]  # remove worm's tail segment
 
     def grow(self, num_to_grow):
         self.is_shrinking = False
@@ -360,7 +372,7 @@ class Worm:
         self.coords.reverse()
 
     def get_tail_direction(self):
-        last = len(self.coords)-1
+        last = len(self.coords) - 1
         last_m1 = last - 1
 
         if self.coords[last]['y'] == self.coords[last_m1]['y']:
@@ -377,16 +389,17 @@ class Worm:
         return direction
 
     def switcheroo(self):
-        pass   # TODO:!
+        pass  # TODO:!
 
     def hit_portal(self):
         self.last_portal_time = current_time()
 
-
+#gpt below
 def prefer_direction_to_target(worm_coords, target, goodness, scale=1.0):
     x_dist, y_dist = utils.xy_distance_to_target(worm_coords[HEAD], target)
     preferred_x_ix = None
     preferred_y_ix = None
+
     if x_dist > 0:
         goodness[IX_R] += 5.0 * scale
         preferred_x_ix = IX_R
@@ -401,20 +414,22 @@ def prefer_direction_to_target(worm_coords, target, goodness, scale=1.0):
         goodness[IX_U] += 5.0 * scale
         preferred_y_ix = IX_U
 
-    # Add some goodness to the direction most in the direction of the target.
-    # Add a little goodness to the alternate directions in case the preferred direction isn't allowed
-    if abs(x_dist) > abs(y_dist):
-        # Some diagonal
-        # goodness[preferred_x_ix] += 10 * (1 - int(y_dist/x_dist))
-        # More straight
-        goodness[preferred_x_ix] += 5.0 * scale
-        goodness[DIRECTIONS.index(D_ALTERNATE[preferred_x_ix])] += 4.0 * scale
+    # If we're already on target, no preference needed
+    if preferred_x_ix is None and preferred_y_ix is None:
+        return goodness
 
+    # Add some goodness to the direction most in the direction of the target.
+    # Add a little goodness to an alternate direction in case the preferred is blocked.
+
+    if abs(x_dist) > abs(y_dist):
+        # prefer x if it exists; otherwise fall back to y
+        primary = preferred_x_ix if preferred_x_ix is not None else preferred_y_ix
+        goodness[primary] += 5.0 * scale
+        goodness[DIRECTIONS.index(D_ALTERNATE[primary])] += 4.0 * scale
     else:
-        # Some diagonal
-        # goodness[preferred_y_ix] += 10 * (1 - int(x_dist/y_dist))
-        # More straight
-        goodness[preferred_y_ix] += 5.0 * scale
-        goodness[DIRECTIONS.index(D_ALTERNATE[preferred_y_ix])] += 4.0 * scale
+        # prefer y if it exists; otherwise fall back to x
+        primary = preferred_y_ix if preferred_y_ix is not None else preferred_x_ix
+        goodness[primary] += 5.0 * scale
+        goodness[DIRECTIONS.index(D_ALTERNATE[primary])] += 4.0 * scale
 
     return goodness
