@@ -1,5 +1,6 @@
 # WormyWars
 Multi-player worm/snake/nibbles game using pygame.
+Originally developed under DoctorObvious then transfered to Thlinkin
 
 Eat apples to grow in length and get points.
 
